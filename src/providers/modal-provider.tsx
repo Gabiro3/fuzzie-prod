@@ -37,7 +37,7 @@ const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   ) => {
     if (modal) {
       if (fetchData) {
-        setData({ ...data, ...(await fetchData()) } || {})
+        setData({ ...data, ...(await fetchData()) })
       }
       setShowingModal(modal)
       setIsOpen(true)
@@ -60,11 +60,7 @@ const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
 }
 
 export const useModal = () => {
-  const context = useContext(ModalContext)
-  if (!context) {
-    throw new Error('useModal must be used within the modal provider')
-  }
-  return context
+  return useContext(ModalContext)
 }
 
 export default ModalProvider
