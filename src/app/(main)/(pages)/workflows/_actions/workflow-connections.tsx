@@ -22,6 +22,7 @@ export const getGoogleListener = async () => {
         googleResourceId: true,
       },
     });
+    console.log(listener);
 
     return listener;
   }
