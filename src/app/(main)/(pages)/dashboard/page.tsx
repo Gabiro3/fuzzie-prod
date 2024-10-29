@@ -1,50 +1,37 @@
 "use client"
+
 import React, { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
 import { db } from '@/lib/db';
-
-
+import { currentUser, auth } from '@clerk/nextjs';
+import { createUser } from './_actions/create-usr';
 interface User {
   googleResourceId: string | null;
 }
 
 const DashboardPage = () => {
-  const { user, isLoaded } = useUser(); // Using the useUser hook
   const [loading, setLoading] = useState(true);
-  const [listener, setListener] = useState<User | null>(null);
+  const [listener, setListener] = useState<User | null>(null); // Set the initial state to User type or null
+  const { userId } = auth();
 
   useEffect(() => {
     const checkUserRegistration = async () => {
-      if (user) {
-        const userId = user.id; // Get the user ID from the user object
-
-        try {
-          const upsertedUser = await db.user.upsert({
-            where: { clerkId: userId },
-            update: {}, // No update needed if the user exists
-            create: {
-              clerkId: userId,
-              name: user.username,
-              email: user.primaryEmailAddressId || '',
-              profileImage: user.imageUrl,
-            },
-            select: {
-              googleResourceId: true,
-            },
-          });
-          setListener(upsertedUser); // Store the upserted user
-          console.log(upsertedUser);
-        } catch (error) {
-          console.error('Error upserting user:', error);
+      if (userId) {
+        const user = await currentUser();
+        if (user) {
+          try {
+            const upsertedUser = await createUser();
+            setListener(upsertedUser || null); // Now setListener can accept User or null
+            console.log(upsertedUser);
+          } catch (error) {
+            console.error('Error upserting user:', error);
+          }
         }
       }
       setLoading(false); // Stop loading once the check is complete
     };
 
-    if (isLoaded) {
-      checkUserRegistration();
-    }
-  }, [user, isLoaded]); // Depend on user and isLoaded
+    checkUserRegistration();
+  }, [userId]); // Depend on userId
 
   if (loading) {
     return <div>Loading...</div>; // Show loading state while checking
@@ -61,3 +48,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
