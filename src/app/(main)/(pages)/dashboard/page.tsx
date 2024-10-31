@@ -1,37 +1,34 @@
-"use client"
+"use client";
 
 import React, { useEffect, useState } from 'react';
-import { db } from '@/lib/db';
-import { currentUser, auth } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { createUser } from './_actions/create-usr';
+
 interface User {
   googleResourceId: string | null;
 }
 
 const DashboardPage = () => {
+  const { isLoaded, isSignedIn, user } = useUser(); // useUser hook for client-side auth
   const [loading, setLoading] = useState(true);
-  const [listener, setListener] = useState<User | null>(null); // Set the initial state to User type or null
-  const { userId } = auth();
+  const [listener, setListener] = useState<User | null>(null);
 
   useEffect(() => {
     const checkUserRegistration = async () => {
-      if (userId) {
-        const user = await currentUser();
-        if (user) {
-          try {
-            const upsertedUser = await createUser();
-            setListener(upsertedUser || null); // Now setListener can accept User or null
-            console.log(upsertedUser);
-          } catch (error) {
-            console.error('Error upserting user:', error);
-          }
+      if (isLoaded && isSignedIn && user) { // Ensure user data is loaded and signed in
+        try {
+          const upsertedUser = await createUser();
+          setListener(upsertedUser || null); // Set the listener state
+          console.log(upsertedUser);
+        } catch (error) {
+          console.error('Error upserting user:', error);
         }
       }
       setLoading(false); // Stop loading once the check is complete
     };
 
     checkUserRegistration();
-  }, [userId]); // Depend on userId
+  }, [isLoaded, isSignedIn, user]);
 
   if (loading) {
     return <div>Loading...</div>; // Show loading state while checking
@@ -48,4 +45,5 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
 
